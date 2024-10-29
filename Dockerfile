@@ -19,14 +19,19 @@ RUN apt-get update && \
         ca-certificates           \
         cm-super                  \
         curl                      \
+        fonts-cmu                 \
         git                       \
         latexmk                   \
         less                      \
+        lmodern                   \
         make                      \
         sudo                      \
         texlive-base              \
         texlive-fonts-recommended \
+        texlive-font-utils        \
         texlive-latex-extra       \
+        texlive-luatex            \
+        texlive-xetex             \
         unzip                     \
         vim                       \
         wget                      \
