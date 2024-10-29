@@ -4,7 +4,7 @@ default:
 
 NAMESPACE=phlummox/
 IMAGE=texlive
-TAG=0.1
+TAG=0.2
 
 DOCKER = docker
 BUILD_ARGS =
