@@ -3,21 +3,36 @@ default:
 	echo pass
 
 NAMESPACE=phlummox/
-NAME=texlive
+IMAGE=texlive
 TAG=0.1
 
+DOCKER = docker
+BUILD_ARGS =
+
 build:
-	docker build \
-	  -t $(NAMESPACE)$(NAME):$(TAG) \
-	  -t $(NAMESPACE)$(NAME):latest \
-	  .
+	$(DOCKER) build $(BUILD_ARGS) \
+	  -t $(NAMESPACE)$(IMAGE):$(TAG) \
+	  -t $(NAMESPACE)$(IMAGE):latest \
+	  -f Dockerfile .
+
+# a few targets for printing useful info about the image. i.e., we use the
+# makefile as the source of truth.
+
+print-image-namespace:
+	@echo $(NAMESPACE)
+
+print-image-name:
+	@echo $(IMAGE)
+
+print-image-version:
+	@echo $(TAG)
 
 # override this with desired bind-mounts, if needed
 MOUNTS =
 
 run:
-	docker -D run -e DISPLAY --rm -it --net=host  \
+	$(DOCKER) -D run -e DISPLAY --rm -it --net=host  \
 	  $(MOUNTS) \
 	  -v $$PWD:/work --workdir /work \
-	  $(NAMESPACE)$(NAME):$(TAG)
+	  $(NAMESPACE)$(IMAGE):$(TAG)
 

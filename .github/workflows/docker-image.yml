@@ -25,7 +25,79 @@ jobs:
     steps:
     - uses: actions/checkout@v4
 
-#    - name: Build the Docker image
-#      run: docker build . --file Dockerfile --tag my-image-name:$(date +%s)
+    - name: Log in to Docker Hub
+      if: github.event_name != 'pull_request'
+      uses: docker/login-action@v3
+      with:
+        username: ${{ secrets.DOCKER_USERNAME }}
+        password: ${{ secrets.DOCKER_PASSWORD }}
+
+    - name: Log in to github Container registry
+      if: github.event_name != 'pull_request'
+      uses: docker/login-action@v3
+      with:
+        registry: ${{ env.REGISTRY }}
+        username: ${{ github.actor }}
+        password: ${{ secrets.GITHUB_TOKEN }}
+
+    # needed? not sure. used for caching.
+    - name: Set up Docker Buildx
+      uses: docker/setup-buildx-action@v3
+
+    - name: Build Docker image
+      shell: bash
+      run: |
+        set -x
+
+        # build the image using paths appropriate for the ghcr.io registry
+        echo "registry is ${{ env.REGISTRY }}"
+        echo "repo is ${{ github.repository }}"
+        echo "repo owner is ${{ github.repository_owner }}"
+
+        image_bit=$(make print-image-name)
+        NAMESPACE="${{ env.REGISTRY }}/${{ github.repository }}/${{ github.repository_owner }}/"
+        BUILD_ARGS="--pull --cache-from=type=registry,ref=${NAMESPACE}${image_bit}:latest \
+                    --cache-to=type=inline --load"
+
+        # try pull?
+        docker pull ${NAMESPACE}${image_bit}:latest || true
+
+        make BUILD_ARGS="${BUILD_ARGS}" NAMESPACE="${NAMESPACE}" DOCKER="docker buildx" build
+
+    - name: push to github registry
+      if: github.event_name != 'pull_request'
+      shell: bash
+      run: |
+        set -x
+        set -euo pipefail
+
+        image_bit=$(make print-image-name)
+        image="${{ env.REGISTRY }}/${{ github.repository }}/${{ github.repository_owner }}/${image_bit}"
+        version=$(make print-image-version)
+
+        docker push ${image}:${version}
+        docker tag  ${image}:${version} ${image}:latest
+        docker push ${image}:latest
+
+    - name: push to docker registry
+      if: startsWith(github.ref, 'refs/tags/v')
+      shell: bash
+      run: |
+        set -x
+        set -euo pipefail
+
+        image_bit=$(make print-image-name)
+        version=$(make print-image-version)
+
+        ghcr_image="${{ env.REGISTRY }}/${{ github.repository }}/${{ github.repository_owner }}/${image_bit}"
+
+        # namespace already includes trailing "/"
+        docker_hub_image=$(make print-image-namespace)${image_bit}
+
+        docker tag ${ghcr_image}:${version} ${docker_hub_image}:${version}
+        docker push ${docker_hub_image}:${version}
+
+        docker tag ${ghcr_image}:latest ${docker_hub_image}:latest
+        docker push ${docker_hub_image}:latest
 
 
