@@ -1,0 +1,31 @@
+name: docker image CI
+
+on:
+  push:
+    paths-ignore:
+      - '**.md'
+      - '.gitignore'
+      - '.dockerignore'
+  pull_request:
+    paths-ignore:
+      - '**.md'
+      - '.gitignore'
+      - '.dockerignore'
+
+env:
+  REGISTRY: ghcr.io
+  DOCKER_HUB_OWNER: phlummox
+
+jobs:
+
+  build:
+
+    runs-on: ubuntu-latest
+
+    steps:
+    - uses: actions/checkout@v4
+
+#    - name: Build the Docker image
+#      run: docker build . --file Dockerfile --tag my-image-name:$(date +%s)
+
+
